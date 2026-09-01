@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
     <style>
         @media print {
-            @page { size: A4 portrait; margin: 0; } 
+            @page { size: A4 portrait; margin: 0mm; } 
             html, body { background: white !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
             .no-print, #loginSection, #loader, #ui-layer { display: none !important; } 
             
@@ -26,14 +26,14 @@
         }
         input { text-transform: uppercase; }
         
-        /* eSign Box CSS */
-        .esign-box { position: relative; width: 170px; height: 85px; background: white; border: 1px solid #ccc; border-radius: 6px; padding: 6px; text-align: left; overflow: hidden; display: none; flex-direction: column; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* Digital Signature Box Custom CSS (বক্স আঁতৰাই মুকলি কৰা হৈছে) */
+        .esign-box { position: relative; width: 180px; height: 85px; background: transparent; border: none; padding: 0; text-align: left; overflow: visible; display: none; flex-direction: column; justify-content: center; box-shadow: none; }
         .esign-box.active { display: flex; }
-        .esign-bg-svg { position: absolute; top: 5px; right: 5px; opacity: 0.3; width: 65px; height: 65px; z-index: 0; }
-        .esign-content { position: relative; z-index: 10; }
-        .esign-title { color: #00a640; font-weight: 900; font-size: 13px; line-height: 1; margin-bottom: 2px; }
-        .esign-text { color: #333; font-size: 10px; font-weight: bold; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .esign-text.light { color: #555; font-size: 9px; font-weight: 600; }
+        .esign-bg-svg { position: absolute; top: 0px; right: 10px; opacity: 1; width: 60px; height: 60px; z-index: 0; }
+        .esign-content { position: relative; z-index: 10; text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white; }
+        .esign-title { color: #00a640; font-weight: 900; font-size: 14px; line-height: 1; margin-bottom: 4px; }
+        .esign-text { color: #000; font-size: 11px; font-weight: 900; line-height: 1.3; }
+        .esign-text.light { color: #222; font-size: 10px; font-weight: 700; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans">
@@ -66,7 +66,7 @@
     <!-- Print Section -->
     <div id="printSection" class="hidden flex-col bg-white border-[12px] border-double border-blue-900 p-6 rounded-2xl relative max-w-3xl w-full">
         <div class="no-print absolute top-[-60px] right-0 flex gap-2">
-            <button onclick="triggerPrint()" class="bg-blue-700 text-white font-bold px-6 py-2 rounded shadow hover:bg-blue-800">Print Admit</button>
+            <button onclick="window.print()" class="bg-blue-700 text-white font-bold px-6 py-2 rounded shadow hover:bg-blue-800">Print Admit</button>
             <button onclick="location.reload()" class="bg-gray-800 text-white font-bold px-6 py-2 rounded shadow hover:bg-gray-900">Back</button>
         </div>
         
@@ -114,18 +114,16 @@
                 <div class="text-center w-40 border-t-2 border-black pt-1">SIGNATURE OF CANDIDATE</div>
                 <div class="text-center w-40 border-t-2 border-black pt-1">SIGNATURE OF INVIGILATOR</div>
                 
-                <!-- Signature Box Container -->
                 <div class="text-center w-48 flex flex-col justify-end items-center h-full">
-                    <div class="h-[85px] mb-1 flex items-end justify-center w-full">
-                        <!-- Default Sign -->
+                    <div class="h-[85px] mb-1 flex items-end justify-center w-full relative">
                         <img id="defaultSignImg" src="sign.png" class="max-h-[60px] object-contain mb-1" onerror="this.style.display='none'">
                         
-                        <!-- Auto eSign Box (Hidden by Default, Synced via DB) -->
-                        <div id="digitalSignatureBox" class="esign-box">
-                            <!-- 3D Checkmark SVG -->
+                        <!-- Open Digital Signature Box -->
+                        <div id="digitalSignatureBox" class="esign-box absolute bottom-0 left-0 right-0 mx-auto">
+                            <!-- Crisp 3D Checkmark SVG -->
                             <svg class="esign-bg-svg" viewBox="0 0 100 100">
-                                <polyline points="20,50 45,75 85,20" fill="none" stroke="black" stroke-width="12" transform="translate(2,2)" />
-                                <polyline points="20,50 45,75 85,20" fill="none" stroke="#00a640" stroke-width="10" />
+                                <polyline points="20,50 45,75 85,20" fill="none" stroke="black" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" transform="translate(2,2)" />
+                                <polyline points="20,50 45,75 85,20" fill="none" stroke="#00a640" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <div class="esign-content">
                                 <p class="esign-title">Digitally Signed</p>
@@ -210,7 +208,7 @@
 
                 if(s.admitStatus === "Released") {
                     
-                    // Auto Sync Digital Signature from Admin
+                    // Sync Digital Signature from Admin
                     let sigData = appSettings.digitalSignature;
                     if(sigData && sigData.isAuthorized) {
                         document.getElementById('defaultSignImg').style.display = 'none';
@@ -218,6 +216,9 @@
                         document.getElementById('sigNameOut').innerText = sigData.signerName;
                         document.getElementById('sigDateOut').innerText = sigData.timestamp;
                         document.getElementById('sigLocOut').innerText = sigData.location;
+                    } else {
+                        document.getElementById('digitalSignatureBox').classList.remove('active');
+                        document.getElementById('defaultSignImg').style.display = 'block';
                     }
 
                     document.getElementById('admitName').innerText = s.studentName; 
@@ -232,7 +233,10 @@
                     document.getElementById('ui-layer').classList.add('hidden');
                     let ps = document.getElementById('printSection');
                     ps.classList.remove('hidden'); 
-                    ps.classList.add('print-active'); // Add print-active right away
+                    ps.classList.add('print-active'); 
+                    
+                    setTimeout(() => { window.print(); location.reload(); }, 500);
+
                 } else {
                     msg.innerText = "Status is: " + s.admitStatus + ". Please contact school."; 
                     msg.className = "mt-4 text-orange-800 font-bold block bg-orange-100 p-2 rounded";
@@ -243,10 +247,6 @@
             }
             
             btn.innerText = "DOWNLOAD"; btn.disabled = false;
-        }
-
-        function triggerPrint() {
-            window.print();
         }
     </script>
 </body>
