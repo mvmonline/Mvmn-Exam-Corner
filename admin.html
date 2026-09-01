@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTSE Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @media print {
+            @page { size: A4 portrait; margin: 5mm; }
+            body { background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
+            body > div:not(.print-active) { display: none !important; }
+            .print-active { display: flex !important; width: 100%; height: 287mm; border: none; padding: 0; margin: 0; box-shadow: none; overflow: hidden;}
+        }
+        input, select { text-transform: uppercase; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    
+    <div id="ui-layer">
+        <!-- Login -->
+        <div id="loginSection" class="flex items-center justify-center min-h-screen px-4 bg-gray-900">
+            <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+                <img src="logo.png" class="mx-auto h-20 w-20 mb-4" onerror="this.src='https://via.placeholder.com/80'">
+                <h2 class="text-2xl font-extrabold mb-6 text-blue-900">ADMIN SECURE LOGIN</h2>
+                <input type="text" id="username" placeholder="Admin User ID" class="w-full border-2 border-gray-300 p-3 rounded mb-4 font-bold text-center outline-none focus:border-blue-600">
+                <input type="password" id="password" placeholder="Password" class="w-full border-2 border-gray-300 p-3 rounded mb-6 font-bold text-center outline-none focus:border-blue-600">
+                <button onclick="login()" class="w-full bg-blue-900 text-white font-bold py-3 rounded-lg hover:bg-blue-800 shadow-lg">LOGIN</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardSection" class="hidden p-2 md:p-4 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                <div class="flex items-center gap-3">
+                    <img src="logo.png" class="h-10 w-10" onerror="this.style.display='none'">
+                    <h1 class="text-xl md:text-2xl font-extrabold text-blue-900"><span class="dyn-examName">MTSE</span> <span class="dyn-year"></span> ADMIN</h1>
+                </div>
+                <div class="flex flex-wrap justify-center gap-2 mt-3 md:mt-0">
+                    <button id="authSignBtn" onclick="authorizeSignature()" class="bg-green-600 text-white font-bold px-4 py-2 rounded shadow hover:bg-green-700 transition">Auth Signature</button>
+                    <button onclick="showTab('students')" class="bg-blue-600 text-white font-bold px-4 py-2 rounded shadow">Students</button>
+                    <button onclick="showTab('settings')" class="bg-gray-800 text-white font-bold px-4 py-2 rounded shadow">Settings</button>
+                    <button onclick="logout()" class="bg-red-600 text-white font-bold px-4 py-2 rounded shadow">Logout</button>
+                </div>
+            </div>
+
+            <!-- Tab 1: Students -->
+            <div id="tab-students">
+                <!-- Filters -->
+                <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
+                    <div class="flex flex-wrap gap-3 items-center justify-between mb-3">
+                        <div class="flex-1 flex flex-wrap gap-2">
+                            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Search Reg No or Name..." class="border-2 border-gray-300 p-2 w-full md:w-64 rounded font-bold outline-none focus:border-blue-500">
+                            <select id="filterClass" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-blue-900 outline-none">
+                                <option value="">All Classes</option><option value="I">Class I</option><option value="II">Class II</option><option value="III">Class III</option><option value="IV">Class IV</option><option value="V">Class V</option><option value="VI">Class VI</option><option value="VII">Class VII</option><option value="VIII">Class VIII</option><option value="IX">Class IX</option><option value="X">Class X</option>
+                            </select>
+                            <select id="filterSec" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-blue-900 outline-none">
+                                <option value="">All Sections</option><option value="MAHA">MAHA</option><option value="RISHI">RISHI</option><option value="N/A">N/A</option>
+                            </select>
+                            <select id="filterLevel" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-blue-900 outline-none">
+                                <option value="">All Levels</option><option value="LEVEL I">Level I</option><option value="LEVEL II">Level II</option><option value="LEVEL III">Level III</option><option value="LEVEL IV">Level IV</option><option value="LEVEL V">Level V</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+                            <button onclick="openAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-indigo-700">+ Add Student</button>
+                            <button onclick="loadData()" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700">Refresh</button>
+                            <button onclick="downloadCSV()" class="bg-yellow-500 text-black px-4 py-2 rounded font-bold shadow hover:bg-yellow-600">Export CSV</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-x-auto border border-gray-200">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-800 text-white">
+                                <th class="p-3">Reg No</th>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">Class</th>
+                                <th class="p-3">Section</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Settings -->
+            <div id="tab-settings" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
+                
+                <h2 class="text-xl font-bold mb-4 text-blue-900 border-b pb-2">Exam Information & Admit Release</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-indigo-50 p-4 rounded border border-indigo-100">
+                    <div class="md:col-span-2"><label class="font-bold text-sm text-indigo-900">Exam Full Name</label><input type="text" id="setExamName" placeholder="e.g. MAHARISHI TALENT SEARCH EXAMINATION" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-indigo-900">Admit Download Open</label><input type="datetime-local" id="setAdmitOpen" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-indigo-900">Admit Download Close</label><input type="datetime-local" id="setAdmitClose" class="border p-2 w-full font-bold"></div>
+                </div>
+
+                <h2 class="text-xl font-bold mb-4 text-blue-900 border-b pb-2">Registration Open/Close Timings</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-blue-50 p-4 rounded border border-blue-100">
+                    <div><label class="font-bold text-sm text-blue-900">Level I Open</label><input type="datetime-local" id="setL1Open" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level I Close</label><input type="datetime-local" id="setL1Close" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level II Open</label><input type="datetime-local" id="setL2Open" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level II Close</label><input type="datetime-local" id="setL2Close" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level III Open</label><input type="datetime-local" id="setL3Open" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level III Close</label><input type="datetime-local" id="setL3Close" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level IV Open</label><input type="datetime-local" id="setL4Open" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level IV Close</label><input type="datetime-local" id="setL4Close" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level V Open</label><input type="datetime-local" id="setL5Open" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-blue-900">Level V Close</label><input type="datetime-local" id="setL5Close" class="border p-2 w-full font-bold"></div>
+                </div>
+                
+                <h2 class="text-xl font-bold mb-4 text-blue-900 border-b pb-2">Admit Card Exam Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div><label class="font-bold text-sm text-gray-700">Exam Year</label><input type="text" id="setYear" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-gray-700">Exam Date</label><input type="text" id="setDate" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-gray-700">Reporting Time</label><input type="text" id="setRepTime" class="border p-2 w-full font-bold"></div>
+                    <div><label class="font-bold text-sm text-gray-700">Exam Time</label><input type="text" id="setExTime" class="border p-2 w-full font-bold"></div>
+                    <div class="md:col-span-2"><label class="font-bold text-sm text-gray-700">Venue Name</label><input type="text" id="setVenue" class="border p-2 w-full font-bold"></div>
+                    <div class="md:col-span-2"><label class="font-bold text-sm text-gray-700">Venue Address</label><input type="text" id="setAddress" class="border p-2 w-full font-bold"></div>
+                </div>
+                <button onclick="saveSettings()" class="bg-blue-900 text-white px-8 py-3 rounded font-extrabold shadow-lg hover:bg-blue-800">SAVE ALL SETTINGS</button>
+                
+                <div class="mt-12 p-6 border-2 border-red-300 bg-red-50 rounded-lg">
+                    <h2 class="text-xl font-extrabold text-red-600 mb-2">DANGER ZONE</h2>
+                    <p class="text-sm mb-4 text-red-800 font-bold">Delete ALL student records to start a new session. Settings will remain saved.</p>
+                    <button onclick="resetDatabase()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-red-700">DELETE ALL DATA (RESET)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit/Add Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl p-6 relative">
+            <button onclick="closeEditModal()" class="absolute top-4 right-4 bg-red-600 text-white font-bold px-3 py-1 rounded">X</button>
+            <h2 id="modalTitle" class="text-2xl font-bold text-blue-900 mb-4 border-b pb-2">Student Record</h2>
+            <input type="hidden" id="editRegNo">
+            <div class="grid grid-cols-2 gap-4 text-sm font-bold">
+                <div><label>Student Name</label><input type="text" id="editName" class="w-full border-2 border-gray-300 p-2 rounded focus:border-blue-600 outline-none"></div>
+                <div><label>Father's Name</label><input type="text" id="editFName" class="w-full border-2 border-gray-300 p-2 rounded focus:border-blue-600 outline-none"></div>
+                <div><label>Gender</label><select id="editGender" class="w-full border-2 border-gray-300 p-2 rounded"><option value="MALE">MALE</option><option value="FEMALE">FEMALE</option><option value="TRANSGENDER">TRANSGENDER</option></select></div>
+                <div><label>Class</label><select id="editClass" class="w-full border-2 border-gray-300 p-2 rounded"><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option><option value="VI">VI</option><option value="VII">VII</option><option value="VIII">VIII</option><option value="IX">IX</option><option value="X">X</option></select></div>
+                <div><label>Section</label><select id="editSec" class="w-full border-2 border-gray-300 p-2 rounded"><option value="MAHA">MAHA</option><option value="RISHI">RISHI</option><option value="N/A">N/A</option></select></div>
+                <div><label>DOB</label><input type="date" id="editDob" class="w-full border-2 border-gray-300 p-2 rounded"></div>
+                <div class="col-span-2"><label>Phone</label><input type="text" id="editPhone" class="w-full border-2 border-gray-300 p-2 rounded"></div>
+            </div>
+            <button id="saveRecordBtn" onclick="saveStudentEdit()" class="mt-6 w-full bg-green-600 text-white font-bold py-3 rounded shadow hover:bg-green-700">SAVE RECORD</button>
+        </div>
+    </div>
+
+    <!-- ================= PRINT SECTIONS (A4 EXACT FIT) ================= -->
+
+    <!-- 1. ADMIT CARD PRINT FORMAT -->
+    <div id="printSectionAdmit" class="hidden flex-col bg-white border-[12px] border-double border-blue-900 p-6 rounded-2xl relative">
+        <div class="text-center mb-4">
+            <img src="logo.png" class="h-14 w-14 mx-auto object-contain mb-1" onerror="this.src='https://via.placeholder.com/60'">
+            <h1 class="text-2xl font-extrabold text-blue-900 tracking-wide"><span class="dyn-examName">MAHARISHI TALENT SEARCH EXAMINATION</span> <span class="dyn-year"></span></h1>
+            <h2 class="text-lg font-extrabold mt-2 bg-blue-900 text-white inline-block px-6 py-1 rounded shadow-md">ADMIT CARD</h2>
+        </div>
+        
+        <div class="flex justify-between items-start mt-4 border-t-2 border-blue-100 pt-4 flex-grow-0">
+            <div class="space-y-3 text-sm font-bold w-3/4 text-gray-800">
+                <p><span class="text-blue-900 w-32 inline-block">STUDENT NAME</span> : <span id="admitName" class="text-black text-base uppercase"></span></p>
+                <p><span class="text-blue-900 w-32 inline-block">FATHER'S NAME</span> : <span id="admitFName" class="uppercase"></span></p>
+                <p><span class="text-blue-900 w-32 inline-block">GENDER</span> : <span id="admitGender"></span></p>
+                <p><span class="text-blue-900 w-32 inline-block">CLASS & SEC</span> : Class <span id="admitClass"></span> (<span id="admitSec"></span>)</p>
+                <p><span class="text-blue-900 w-32 inline-block">LEVEL</span> : <span id="admitLevel" class="bg-yellow-200 px-1 rounded text-black"></span></p>
+            </div>
+            <div class="w-1/4 flex justify-end">
+                <div class="h-32 w-28 border-2 border-blue-900 flex items-center justify-center text-xs text-center text-gray-500 bg-gray-50">Paste Photo</div>
+            </div>
+        </div>
+
+        <div class="text-center my-6 flex-grow-0">
+            <svg id="barcode" class="mx-auto"></svg>
+        </div>
+
+        <div class="mt-2 border-2 border-blue-900 p-4 rounded-lg bg-blue-50 relative flex-grow-0">
+            <h3 class="font-extrabold text-blue-900 bg-white px-3 py-0.5 border border-blue-900 rounded absolute -top-4 left-1/2 transform -translate-x-1/2">EXAMINATION DETAILS</h3>
+            <div class="text-sm font-bold space-y-2 mt-2 text-gray-800">
+                <p><span class="text-blue-900">REGISTRATION NO:</span> <span id="admitRegNoTxt" class="font-black text-lg ml-1 bg-white px-2 py-0.5 border border-gray-300 rounded shadow-sm text-blue-900"></span></p>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <p><span class="text-blue-900">Exam Date:</span> <span class="dyn-date bg-white px-1 rounded border border-gray-200"></span></p>
+                    <p><span class="text-blue-900">Reporting Time:</span> <span class="dyn-repTime bg-white px-1 rounded border border-gray-200"></span></p>
+                    <p><span class="text-blue-900">Exam Time:</span> <span class="dyn-exTime bg-white px-1 rounded border border-gray-200"></span></p>
+                    <p><span class="text-blue-900">Venue:</span> <span class="dyn-venue bg-white px-1 rounded border border-gray-200"></span></p>
+                </div>
+                <p class="mt-2 border-t border-blue-200 pt-2"><span class="text-blue-900">Venue Address:</span> <span class="dyn-address"></span></p>
+            </div>
+        </div>
+
+        <div class="flex-grow"></div> 
+
+        <div class="mt-auto">
+            <div class="flex justify-between text-xs font-extrabold text-gray-800 pb-4 mb-4 border-b-2 border-gray-300">
+                <div class="text-center w-40 border-t-2 border-black pt-1 mt-12">SIGNATURE OF CANDIDATE</div>
+                <div class="text-center w-40 border-t-2 border-black pt-1 mt-12">SIGNATURE OF INVIGILATOR</div>
+                
+                <div class="text-center w-48 relative">
+                    <!-- Default Signature -->
+                    <img id="defaultSignImg" src="sign.png" class="absolute bottom-8 left-0 right-0 mx-auto h-16 object-contain" onerror="this.style.display='none'">
+                    
+                    <!-- Digital Signature Box (Hidden by default) -->
+                    <div id="digitalSignatureBox" class="hidden absolute bottom-6 left-0 right-0 mx-auto w-[170px] border-2 border-green-600 p-1 bg-white flex-col items-start justify-center shadow-sm" style="height: 55px; border-radius: 4px;">
+                        <div class="flex items-center gap-1 w-full border-b border-gray-300 pb-0.5 mb-0.5">
+                            <span class="text-green-600 font-extrabold text-lg leading-none">☑</span>
+                            <span class="text-green-700 font-extrabold text-[9px] leading-tight text-left">Digitally Signed<br>By: Principal</span>
+                        </div>
+                        <div class="text-[8px] text-gray-800 font-bold leading-tight text-left">
+                            Date: <span id="sigDate"></span><br>
+                            Loc: <span id="sigLoc"></span>
+                        </div>
+                    </div>
+                    
+                    <p class="border-t-2 border-black pt-1 mt-12">PRINCIPAL SIGNATURE</p>
+                </div>
+            </div>
+            <div class="text-xs font-bold bg-gray-50 border border-gray-300 p-3 rounded">
+                <h4 class="font-extrabold mb-1 text-red-700 underline">IMPORTANT INSTRUCTIONS:</h4>
+                <ul class="list-disc pl-5 space-y-0.5">
+                    <li>ARRIVE AT THE VENUE AT LEAST 30 MINUTES PRIOR TO START.</li>
+                    <li>BRING YOUR ADMIT CARD AND A VALID PHOTO ID FOR VERIFICATION.</li>
+                    <li>ELECTRONIC DEVICES ARE STRICTLY PROHIBITED.</li>
+                    <li>USE ONLY BLACK OR BLUE BALLPOINT PEN.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ACKNOWLEDGEMENT SLIP PRINT FORMAT (A4 EXACT FIT) -->
+    <div id="printSectionSlip" class="hidden flex-col justify-between bg-white px-2">
+        <!-- Student Copy -->
+        <div class="border-4 border-blue-900 rounded-lg p-5 relative bg-blue-50 h-[48%] flex flex-col">
+            <div class="text-center mb-2">
+                <img src="logo.png" class="h-10 w-10 mx-auto object-contain mb-1" onerror="this.src='https://via.placeholder.com/40'">
+                <h1 class="text-lg font-extrabold text-blue-900 tracking-wide"><span class="dyn-examName">MAHARISHI TALENT SEARCH EXAMINATION</span> - <span class="dyn-year"></span></h1>
+                <h2 class="text-xs font-bold text-gray-700 mt-1">Online Application Form</h2>
+                <h3 class="text-sm font-extrabold bg-blue-900 text-white inline-block px-4 py-0.5 rounded mt-1">Acknowledgement Slip</h3>
+            </div>
+            <div class="text-[10px] font-bold text-gray-700 flex justify-between mb-3 border-b-2 border-blue-200 pb-2">
+                <div><p>Submittted On: <span id="slipSubDate" class="text-blue-900 font-extrabold"></span></p><p>Downloaded On: <span id="slipDownDate" class="text-blue-900 font-extrabold"></span></p></div>
+                <div class="text-right"><p class="text-sm text-black">Registration No : <span id="slipRegNo" class="font-extrabold text-blue-900 text-base"></span></p></div>
+            </div>
+            <div class="flex-1 flex justify-between items-center">
+                <div class="w-3/4 pr-2">
+                    <h3 class="font-extrabold underline mb-1 text-sm text-blue-900">STUDENT'S DETAILS</h3>
+                    <table class="w-full text-[11px] font-bold text-left text-gray-800">
+                        <tr><td class="w-1/3 py-1 text-blue-900 border-b border-gray-300">STUDENT NAME</td><td class="text-sm border-b border-gray-300">: <span id="slipName" class="font-extrabold text-black"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900 border-b border-gray-300">FATHER'S NAME</td><td class="border-b border-gray-300">: <span id="slipFName"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900 border-b border-gray-300">GENDER</td><td class="border-b border-gray-300">: <span id="slipGender"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900 border-b border-gray-300">CLASS</td><td class="border-b border-gray-300">: <span id="slipClass"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900 border-b border-gray-300">SECTION</td><td class="border-b border-gray-300">: <span id="slipSec"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900 border-b border-gray-300">DATE OF BIRTH</td><td class="border-b border-gray-300">: <span id="slipDob"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900 border-b border-gray-300">LEVEL</td><td class="border-b border-gray-300">: <span id="slipLevel"></span></td></tr>
+                        <tr><td class="py-1 text-blue-900">PHONE NO</td><td>: <span id="slipPhone"></span></td></tr>
+                    </table>
+                </div>
+                <div class="w-1/4 flex justify-end">
+                    <div id="slipQr" class="border-2 border-blue-900 p-1 bg-white"></div>
+                </div>
+            </div>
+            <div class="mt-2 border-t-2 border-blue-200 pt-2">
+                <h3 class="font-bold text-center mb-1 text-[10px] text-blue-900">Declaration</h3>
+                <p class="text-[9px] text-justify leading-tight font-semibold text-gray-600">I hereby declare that all the information and particulars provided by me in this registration form are true, complete, and correct to the best of my knowledge and belief. I understand that if any information is found to be false, incorrect, or misleading at any stage, my candidature is liable to be cancelled immediately.</p>
+            </div>
+        </div>
+
+        <!-- Cut Line -->
+        <div class="text-center my-1 font-black text-gray-400 tracking-widest text-xs flex items-center justify-center">
+            <span>✂ - - - - - - - - - - - - - - - - - - - - - - - - CUT HERE - - - - - - - - - - - - - - - - - - - - - - - - ✂</span>
+        </div>
+
+        <!-- Office Copy -->
+        <div class="border-4 border-gray-800 rounded-lg p-5 bg-white relative h-[47%] flex flex-col">
+            <div class="text-center mb-3">
+                <h1 class="text-lg font-extrabold text-gray-800 tracking-wide"><span class="dyn-examName">MAHARISHI TALENT SEARCH EXAMINATION</span> <span class="dyn-year"></span></h1>
+                <h2 class="text-sm font-extrabold bg-gray-800 text-white inline-block px-4 py-0.5 rounded mt-2">Registration Fees Payment Receipt</h2>
+                <p class="text-[10px] font-bold text-gray-600 mt-1">(USE OFFICE ONLY)</p>
+            </div>
+            <div class="text-[10px] font-bold text-gray-700 flex justify-between mb-3 border-b-2 border-gray-200 pb-2">
+                <div><p>Submittted On: <span id="receiptSubDate" class="text-black font-extrabold"></span></p><p>Downloaded On: <span id="receiptDownDate" class="text-black font-extrabold"></span></p></div>
+            </div>
+            <div class="flex-1 flex justify-between items-start text-[11px] font-bold text-gray-800">
+                <div class="space-y-1.5 w-3/4">
+                    <p class="text-sm">Registration No : <span id="receiptRegNo" class="font-extrabold text-black"></span></p>
+                    <p class="text-sm border-b border-gray-100 pb-1">Student's Name : <span id="receiptName" class="font-extrabold text-black uppercase"></span></p>
+                    <p>Class : <span id="receiptClass"></span></p>
+                    <p>Section : <span id="receiptSec"></span></p>
+                    <p>Level : <span id="receiptLevel"></span></p>
+                    <p>Phone No : <span id="receiptPhone"></span></p>
+                    <div class="mt-4 bg-gray-100 p-2 rounded border border-gray-300 w-3/4">
+                        <p class="text-[12px] font-extrabold text-black mb-1">Fees : ___________________</p>
+                        <p class="text-[12px] font-extrabold text-black mb-1">Payment mode : Cash / Online</p>
+                        <p class="text-[12px] font-extrabold text-black">Payment Date : ___________________</p>
+                    </div>
+                </div>
+                <div class="w-1/4 flex justify-end"><div id="receiptQr" class="border-2 border-gray-800 p-1"></div></div>
+            </div>
+            <div class="mt-auto flex justify-between items-end pt-4">
+                <div></div>
+                <div class="text-center w-48">
+                    <div class="h-10 w-full"></div> <!-- Empty space for sign -->
+                    <p class="border-t-2 border-black pt-1 font-extrabold text-xs">Signature</p>
+                    <p class="font-extrabold text-xs text-gray-600">Office of the Principal</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyCG00CkuMozSfVCnB9qU42DsbLVmI3y9dg", authDomain: "mtse2026-805a0.firebaseapp.com", databaseURL: "https://mtse2026-805a0-default-rtdb.firebaseio.com", projectId: "mtse2026-805a0", storageBucket: "mtse2026-805a0.firebasestorage.app", messagingSenderId: "641604091734", appId: "1:641604091734:web:391d6501ea459bace0e0f7" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let studentsData = [], appSettings = {};
+        let isEditing = false;
+        
+        // Digital Signature Variables
+        window.isSignatureAuthorized = false;
+        window.sigDateTime = "";
+        window.sigLocation = "";
+
+        function authorizeSignature() {
+            let pin = prompt("Enter Signature Authorization PIN:");
+            if(pin === "2399592630") {
+                let loc = prompt("Enter Location (e.g., Guwahati):") || "Guwahati";
+                window.sigLocation = loc.toUpperCase();
+                window.sigDateTime = new Date().toLocaleString('en-IN');
+                window.isSignatureAuthorized = true;
+                alert("Signature Authorized Successfully!");
+                let btn = document.getElementById('authSignBtn');
+                btn.innerText = "Signature: Auth ✓";
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-teal-800', 'hover:bg-teal-900');
+            } else if(pin !== null) {
+                alert("Invalid PIN!");
+            }
+        }
+
+        function login() {
+            if(document.getElementById('username').value === '7002373630' && document.getElementById('password').value === 'Mvm@mtse21210') {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                loadData();
+            } else { alert("Wrong Credentials!"); }
+        }
+        function logout() { location.reload(); }
+        function showTab(tab) {
+            document.getElementById('tab-students').classList.add('hidden');
+            document.getElementById('tab-settings').classList.add('hidden');
+            document.getElementById('tab-'+tab).classList.remove('hidden');
+        }
+
+        async function loadData() {
+            document.getElementById('dataTableBody').innerHTML = '<tr><td colspan="6" class="text-center p-4 font-bold text-blue-900">Loading Data...</td></tr>';
+            try {
+                let doc = await db.collection("mtse_settings").doc("config").get();
+                if(doc.exists) { appSettings = doc.data(); updateUIVariables(); }
+
+                let snapshot = await db.collection("mtse_students").get();
+                studentsData = [];
+                snapshot.forEach(d => { studentsData.push(d.data()); });
+                studentsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                renderTable(studentsData);
+            } catch(e) { document.getElementById('dataTableBody').innerHTML = '<tr><td colspan="6" class="text-center p-4 text-red-500">Error loading data</td></tr>'; }
+        }
+
+        function updateUIVariables() {
+            let exName = appSettings.examName || 'MAHARISHI TALENT SEARCH EXAMINATION';
+            document.querySelectorAll('.dyn-examName').forEach(e => e.innerText = exName);
+            document.querySelectorAll('.dyn-year').forEach(e => e.innerText = appSettings.year || '2026');
+            document.querySelectorAll('.dyn-date').forEach(e => e.innerText = appSettings.examDate || '');
+            document.querySelectorAll('.dyn-repTime').forEach(e => e.innerText = appSettings.reportingTime || '');
+            document.querySelectorAll('.dyn-exTime').forEach(e => e.innerText = appSettings.examTime || '');
+            document.querySelectorAll('.dyn-venue').forEach(e => e.innerText = appSettings.venue || '');
+            document.querySelectorAll('.dyn-address').forEach(e => e.innerText = appSettings.venueAddress || '');
+            
+            document.getElementById('setExamName').value = exName;
+            document.getElementById('setYear').value = appSettings.year || ''; document.getElementById('setDate').value = appSettings.examDate || '';
+            document.getElementById('setRepTime').value = appSettings.reportingTime || ''; document.getElementById('setExTime').value = appSettings.examTime || '';
+            document.getElementById('setVenue').value = appSettings.venue || ''; document.getElementById('setAddress').value = appSettings.venueAddress || '';
+            
+            document.getElementById('setAdmitOpen').value = appSettings.admitOpen || '';
+            document.getElementById('setAdmitClose').value = appSettings.admitClose || '';
+            
+            ['L1', 'L2', 'L3', 'L4', 'L5'].forEach(l => { document.getElementById('set'+l+'Open').value = appSettings[l+'_open'] || ''; document.getElementById('set'+l+'Close').value = appSettings[l+'_close'] || ''; });
+        }
+
+        function renderTable(data) {
+            let tbody = document.getElementById('dataTableBody'); tbody.innerHTML = '';
+            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 font-bold text-gray-500">No records found.</td></tr>'; return; }
+            
+            data.forEach(s => {
+                let statusColor = s.admitStatus === 'Released' ? 'bg-green-100 text-green-900 border-green-400' : 'bg-orange-100 text-orange-900 border-orange-400';
+                tbody.insertAdjacentHTML('beforeend', `
+                <tr class="border-b border-gray-200 hover:bg-blue-50 transition">
+                    <td class="p-3 font-extrabold text-blue-900">${s.regNo}</td>
+                    <td class="p-3 font-bold text-gray-800 uppercase">${s.studentName}</td>
+                    <td class="p-3 font-bold text-gray-600">Class ${s.class}</td>
+                    <td class="p-3 font-bold text-gray-600">${s.section}</td>
+                    <td class="p-3 text-center">
+                        <select onchange="changeStatus('${s.regNo}', this.value)" class="border-2 p-1 rounded font-bold text-xs outline-none shadow-sm cursor-pointer ${statusColor}">
+                            <option value="Hold" ${s.admitStatus === 'Hold' ? 'selected' : ''}>Hold</option>
+                            <option value="Released" ${s.admitStatus === 'Released' ? 'selected' : ''}>Released</option>
+                        </select>
+                    </td>
+                    <td class="p-3 text-center flex flex-wrap justify-center gap-1">
+                        <button onclick="openEditModal('${s.regNo}')" class="bg-indigo-600 text-white px-3 py-1 rounded shadow text-xs font-bold hover:bg-indigo-700">Edit</button>
+                        <button onclick="printSlip('${s.regNo}')" class="bg-gray-800 text-white px-3 py-1 rounded shadow text-xs font-bold hover:bg-gray-900">Slip</button>
+                        <button onclick="printAdmit('${s.regNo}')" class="bg-blue-600 text-white px-3 py-1 rounded shadow text-xs font-bold hover:bg-blue-700">Admit</button>
+                        <button onclick="deleteStudent('${s.regNo}')" class="bg-red-600 text-white px-3 py-1 rounded shadow text-xs font-bold hover:bg-red-700">Del</button>
+                    </td>
+                </tr>`);
+            });
+        }
+
+        function filterTable() {
+            let q = document.getElementById('searchInput').value.toLowerCase();
+            let c = document.getElementById('filterClass').value;
+            let s = document.getElementById('filterSec').value;
+            let l = document.getElementById('filterLevel').value;
+
+            let filtered = studentsData.filter(st => {
+                let matchQ = st.studentName.toLowerCase().includes(q) || st.regNo.toString().includes(q) || st.phone.includes(q);
+                let matchC = c === "" || st.class === c;
+                let matchS = s === "" || st.section === s;
+                let matchL = l === "" || st.level.startsWith(l + " ");
+                return matchQ && matchC && matchS && matchL;
+            });
+            renderTable(filtered);
+        }
+
+        async function changeStatus(regNo, newStatus) {
+            try {
+                await db.collection("mtse_students").doc(regNo.toString()).update({ admitStatus: newStatus });
+                studentsData.find(s => s.regNo == regNo).admitStatus = newStatus;
+                renderTable(studentsData); 
+            } catch(e) { alert("Error updating status"); }
+        }
+
+        function downloadCSV() {
+            if(!studentsData || studentsData.length === 0) return alert("No data available to export.");
+            let csv = "Reg_No,Student_Name,Father_Name,Gender,Class,Section,DOB,Level,Phone,Status,Timestamp\n";
+            studentsData.forEach(r => { 
+                csv += `"${r.regNo}","${r.studentName}","${r.fatherName}","${r.gender}","${r.class}","${r.section}","${r.dob}","${r.level}","${r.phone}","${r.admitStatus}","${r.timestamp}"\n`; 
+            });
+            let blob = new Blob([csv], { type: 'text/csv' });
+            let link = document.createElement("a"); 
+            link.href = window.URL.createObjectURL(blob); 
+            link.download = `MTSE_Students_Data.csv`; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openAddModal() {
+            isEditing = false;
+            document.getElementById('modalTitle').innerText = "Add New Student Manually";
+            document.getElementById('editRegNo').value = ''; document.getElementById('editName').value = ''; document.getElementById('editFName').value = '';
+            document.getElementById('editGender').value = ''; document.getElementById('editClass').value = ''; document.getElementById('editSec').value = '';
+            document.getElementById('editDob').value = ''; document.getElementById('editPhone').value = '';
+            document.getElementById('editModal').classList.remove('hidden'); document.getElementById('editModal').classList.add('flex');
+        }
+        function openEditModal(regNo) {
+            isEditing = true;
+            document.getElementById('modalTitle').innerText = "Edit Student Record";
+            let s = studentsData.find(x => x.regNo == regNo);
+            document.getElementById('editRegNo').value = s.regNo; document.getElementById('editName').value = s.studentName; document.getElementById('editFName').value = s.fatherName;
+            document.getElementById('editGender').value = s.gender; document.getElementById('editClass').value = s.class; document.getElementById('editSec').value = s.section;
+            document.getElementById('editDob').value = s.dob; document.getElementById('editPhone').value = s.phone;
+            document.getElementById('editModal').classList.remove('hidden'); document.getElementById('editModal').classList.add('flex');
+        }
+        function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); document.getElementById('editModal').classList.remove('flex'); }
+        
+        async function saveStudentEdit() {
+            let cls = document.getElementById('editClass').value; let lvl = '';
+            if (['I', 'II'].includes(cls)) lvl = 'LEVEL I (Classes I & II)'; else if (['III', 'IV'].includes(cls)) lvl = 'LEVEL II (Classes III & IV)'; else if (['V', 'VI'].includes(cls)) lvl = 'LEVEL III (Classes V & VI)'; else if (['VII', 'VIII'].includes(cls)) lvl = 'LEVEL IV (Classes VII & VIII)'; else if (['IX', 'X'].includes(cls)) lvl = 'LEVEL V (Classes IX & X)'; 
+
+            let data = {
+                studentName: document.getElementById('editName').value.trim().replace(/\s+/g, ' ').toUpperCase(),
+                fatherName: document.getElementById('editFName').value.trim().replace(/\s+/g, ' ').toUpperCase(),
+                gender: document.getElementById('editGender').value,
+                class: cls, section: document.getElementById('editSec').value,
+                dob: document.getElementById('editDob').value, phone: document.getElementById('editPhone').value.trim(), level: lvl
+            };
+            if(!data.studentName || !data.class) return alert("Name and Class are required.");
+
+            let btn = document.getElementById('saveRecordBtn');
+            btn.innerText = "Processing..."; btn.disabled = true;
+
+            try {
+                if(isEditing) {
+                    let reg = document.getElementById('editRegNo').value;
+                    await db.collection("mtse_students").doc(reg).update(data);
+                    alert("Record updated!");
+                } else {
+                    // Strict Duplicate Check for Manual Add
+                    const existingByName = await db.collection("mtse_students").where("studentName", "==", data.studentName).where("dob", "==", data.dob).get();
+                    const existingByPhone = await db.collection("mtse_students").where("phone", "==", data.phone).get();
+
+                    if (!existingByName.empty || !existingByPhone.empty) {
+                        alert("Duplicate Entry: A student with this Name & DOB, or Phone Number already exists!");
+                        btn.innerText = "SAVE RECORD"; btn.disabled = false;
+                        return;
+                    }
+
+                    let regNo = Math.floor(100000 + Math.random() * 900000); 
+                    data.regNo = regNo; data.admitStatus = "Hold"; data.timestamp = new Date().toLocaleString();
+                    await db.collection("mtse_students").doc(regNo.toString()).set(data);
+                    alert(`Student Added successfully! Reg No: ${regNo}`);
+                }
+                closeEditModal(); loadData();
+            } catch(e) { alert("Error saving details."); }
+            btn.innerText = "SAVE RECORD"; btn.disabled = false;
+        }
+
+        async function saveSettings() {
+            let p = { 
+                examName: document.getElementById('setExamName').value || 'MAHARISHI TALENT SEARCH EXAMINATION',
+                year: document.getElementById('setYear').value, examDate: document.getElementById('setDate').value, 
+                reportingTime: document.getElementById('setRepTime').value, examTime: document.getElementById('setExTime').value, 
+                venue: document.getElementById('setVenue').value, venueAddress: document.getElementById('setAddress').value,
+                admitOpen: document.getElementById('setAdmitOpen').value, admitClose: document.getElementById('setAdmitClose').value
+            };
+            ['L1','L2','L3','L4','L5'].forEach(l => { p[l+'_open']=document.getElementById('set'+l+'Open').value; p[l+'_close']=document.getElementById('set'+l+'Close').value; });
+            await db.collection("mtse_settings").doc("config").set(p, {merge: true});
+            alert("Settings Updated!"); loadData();
+        }
+
+        // BATCH DELETE FIXED (Handle unlimited documents)
+        async function resetDatabase() {
+            let conf = prompt("WARNING: This permanently deletes ALL student data.\nType 'DELETE' to confirm:");
+            if(conf === 'DELETE') { 
+                try {
+                    let snapshot = await db.collection("mtse_students").get();
+                    if(snapshot.empty) { alert("Database is already empty."); return; }
+                    
+                    let batches = [];
+                    let batch = db.batch();
+                    let count = 0;
+
+                    snapshot.docs.forEach((doc) => { 
+                        batch.delete(doc.ref); 
+                        count++;
+                        if(count === 490) { // Firestore batch limit
+                            batches.push(batch.commit());
+                            batch = db.batch();
+                            count = 0;
+                        }
+                    });
+                    if(count > 0) batches.push(batch.commit());
+                    
+                    await Promise.all(batches);
+                    alert("Database Reset Successful! All data deleted."); 
+                    loadData(); 
+                } catch(e) { alert("Failed to delete database."); console.log(e); }
+            }
+        }
+
+        function triggerPrint(targetId) {
+            document.getElementById('ui-layer').classList.add('hidden');
+            document.getElementById('printSectionAdmit').classList.remove('print-active');
+            document.getElementById('printSectionSlip').classList.remove('print-active');
+            
+            let targetDiv = document.getElementById(targetId);
+            targetDiv.classList.add('print-active');
+            
+            window.print();
+            
+            targetDiv.classList.remove('print-active');
+            document.getElementById('ui-layer').classList.remove('hidden');
+        }
+
+        function printAdmit(regNo) {
+            let s = studentsData.find(x => x.regNo == regNo);
+            if(s.admitStatus !== 'Released') { if(!confirm(`Warning: Status is '${s.admitStatus}'. Print anyway?`)) return; }
+            
+            // Signature Logic
+            if(window.isSignatureAuthorized) {
+                document.getElementById('defaultSignImg').classList.add('hidden');
+                document.getElementById('digitalSignatureBox').classList.remove('hidden');
+                document.getElementById('digitalSignatureBox').classList.add('flex');
+                document.getElementById('sigDate').innerText = window.sigDateTime;
+                document.getElementById('sigLoc').innerText = window.sigLocation;
+            } else {
+                document.getElementById('digitalSignatureBox').classList.add('hidden');
+                document.getElementById('digitalSignatureBox').classList.remove('flex');
+                document.getElementById('defaultSignImg').classList.remove('hidden');
+            }
+
+            document.getElementById('admitName').innerText = s.studentName; document.getElementById('admitFName').innerText = s.fatherName; document.getElementById('admitClass').innerText = s.class; document.getElementById('admitSec').innerText = s.section; document.getElementById('admitLevel').innerText = s.level; document.getElementById('admitGender').innerText = s.gender; document.getElementById('admitRegNoTxt').innerText = s.regNo;
+            JsBarcode("#barcode", s.regNo.toString(), {format:"CODE128", width: 2.5, height: 60, displayValue:false});
+            triggerPrint('printSectionAdmit');
+        }
+
+        function printSlip(regNo) {
+            let s = studentsData.find(x => x.regNo == regNo);
+            let downDate = new Date().toLocaleString();
+            document.getElementById('slipRegNo').innerText = s.regNo; document.getElementById('slipSubDate').innerText = s.timestamp || 'N/A'; document.getElementById('slipDownDate').innerText = downDate;
+            document.getElementById('slipName').innerText = s.studentName; document.getElementById('slipClass').innerText = s.class; document.getElementById('slipSec').innerText = s.section; document.getElementById('slipLevel').innerText = s.level; document.getElementById('slipFName').innerText = s.fatherName; document.getElementById('slipGender').innerText = s.gender; document.getElementById('slipDob').innerText = s.dob; document.getElementById('slipPhone').innerText = s.phone;
+            
+            document.getElementById('receiptRegNo').innerText = s.regNo; document.getElementById('receiptSubDate').innerText = s.timestamp || 'N/A'; document.getElementById('receiptDownDate').innerText = downDate;
+            document.getElementById('receiptName').innerText = s.studentName; document.getElementById('receiptClass').innerText = s.class; document.getElementById('receiptSec').innerText = s.section; document.getElementById('receiptLevel').innerText = s.level; document.getElementById('receiptPhone').innerText = s.phone;
+
+            document.getElementById("slipQr").innerHTML = ""; document.getElementById("receiptQr").innerHTML = "";
+            new QRCode(document.getElementById("slipQr"), { text: s.regNo.toString(), width: 80, height: 80 });
+            new QRCode(document.getElementById("receiptQr"), { text: s.regNo.toString(), width: 64, height: 64 });
+            triggerPrint('printSectionSlip');
+        }
+    </script>
+</body>
+</html>
