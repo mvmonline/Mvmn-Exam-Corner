@@ -11,26 +11,43 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @media print {
-            @page { size: A4 portrait; margin: 5mm; }
-            body { background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
+            @page { size: A4 portrait; margin: 0; }
+            html, body { background: white !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
             
-            /* Slip Print Blank Page Issue Fixed Here */
+            /* Hide everything else during print */
             body > div:not(.print-active):not(.print-active-slip) { display: none !important; }
             
-            .print-active { display: flex !important; width: 100%; height: 287mm; border: none; padding: 0; margin: 0; box-shadow: none; overflow: hidden;}
-            .print-active-slip { display: flex !important; flex-direction: column !important; width: 100% !important; height: 285mm !important; margin: 0; padding: 0; box-shadow: none; border: none; overflow: hidden; page-break-inside: avoid; }
+            /* Admin Admit Card 100% A4 Fit with Border (Student portal ৰ দৰেই) */
+            .print-active { 
+                display: flex !important; flex-direction: column !important;
+                width: 200mm !important; height: 285mm !important; 
+                margin: 5mm auto !important; padding: 20px !important;
+                border: 10px double #1e3a8a !important; border-radius: 16px !important;
+                box-sizing: border-box !important; box-shadow: none !important; 
+                overflow: hidden !important; page-break-inside: avoid !important;
+            }
+            
+            /* Acknowledgement Slip Print CSS */
+            .print-active-slip { 
+                display: flex !important; flex-direction: column !important; 
+                width: 100% !important; height: 285mm !important; 
+                margin: 0 !important; padding: 0 !important; 
+                box-shadow: none !important; border: none !important; 
+                overflow: hidden !important; page-break-inside: avoid !important; 
+            }
+            .no-print { display: none !important; }
         }
         input, select { text-transform: uppercase; }
         .slip-table td { padding: 4px 8px; border-bottom: 1px dashed #ccc; }
         
-        /* Digital Signature Box Custom CSS */
-        .esign-box { position: relative; width: 170px; height: 85px; background: white; border: 1px solid #ccc; border-radius: 6px; padding: 6px; text-align: left; overflow: hidden; display: none; flex-direction: column; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* 100% Crisp 3D Digital Signature Box */
+        .esign-box { position: relative; width: 180px; height: 85px; background: transparent; border: none; padding: 0; text-align: left; overflow: visible; display: none; flex-direction: column; justify-content: center; box-shadow: none; }
         .esign-box.active { display: flex; }
-        .esign-bg-svg { position: absolute; top: 5px; right: 5px; opacity: 0.3; width: 65px; height: 65px; z-index: 0; }
-        .esign-content { position: relative; z-index: 10; }
-        .esign-title { color: #00a640; font-weight: 900; font-size: 13px; line-height: 1; margin-bottom: 2px; }
-        .esign-text { color: #333; font-size: 10px; font-weight: bold; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .esign-text.light { color: #555; font-size: 9px; font-weight: 600; }
+        .esign-bg-svg { position: absolute; top: 0px; right: 10px; opacity: 1; width: 60px; height: 60px; z-index: 0; }
+        .esign-content { position: relative; z-index: 10; text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white; }
+        .esign-title { color: #00a640; font-weight: 900; font-size: 14px; line-height: 1; margin-bottom: 4px; }
+        .esign-text { color: #000; font-size: 11px; font-weight: 900; line-height: 1.3; }
+        .esign-text.light { color: #222; font-size: 10px; font-weight: 700; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -59,7 +76,6 @@
                 </div>
                 <div class="flex flex-wrap justify-center gap-2 mt-3 md:mt-0">
                     <button id="authSignBtn" onclick="authorizeSignature()" class="bg-teal-600 text-white font-bold px-4 py-2 rounded shadow hover:bg-teal-700 transition">Auth eSign</button>
-                    <!-- New Dashboard Tab Button -->
                     <button onclick="showTab('dashboard')" id="btn-tab-dashboard" class="bg-gray-800 text-white font-bold px-4 py-2 rounded shadow">Overview</button>
                     <button onclick="showTab('students')" id="btn-tab-students" class="bg-blue-600 text-white font-bold px-4 py-2 rounded shadow hover:bg-blue-700">Students</button>
                     <button onclick="showTab('settings')" id="btn-tab-settings" class="bg-gray-800 text-white font-bold px-4 py-2 rounded shadow hover:bg-gray-900">Settings</button>
@@ -67,9 +83,8 @@
                 </div>
             </div>
 
-            <!-- Tab 0: Dashboard Overview (NEW) -->
+            <!-- Tab 0: Dashboard Overview -->
             <div id="tab-dashboard" class="hidden">
-                <!-- Top Summary Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white border-l-4 border-blue-600 p-4 rounded-lg shadow-sm">
                         <p class="text-sm font-bold text-gray-500 uppercase tracking-wide">Total Students</p>
@@ -89,9 +104,7 @@
                     </div>
                 </div>
 
-                <!-- Detailed Breakdowns -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Class Stats -->
                     <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
                         <h3 class="font-extrabold text-blue-900 mb-3 text-center border-b pb-2 uppercase tracking-widest">Class-wise Stats</h3>
                         <table class="w-full text-sm text-center">
@@ -99,7 +112,6 @@
                             <tbody id="classStatsBody"></tbody>
                         </table>
                     </div>
-                    <!-- Section Stats -->
                     <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
                         <h3 class="font-extrabold text-blue-900 mb-3 text-center border-b pb-2 uppercase tracking-widest">Section-wise Stats</h3>
                         <table class="w-full text-sm text-center">
@@ -107,7 +119,6 @@
                             <tbody id="secStatsBody"></tbody>
                         </table>
                     </div>
-                    <!-- Level Stats -->
                     <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
                         <h3 class="font-extrabold text-blue-900 mb-3 text-center border-b pb-2 uppercase tracking-widest">Level-wise Stats</h3>
                         <table class="w-full text-sm text-center">
@@ -135,7 +146,6 @@
                             </select>
                         </div>
                         <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
-                            <!-- New Duplicate Filter Button -->
                             <button id="dupBtn" onclick="toggleDuplicates()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 transition">Show Duplicates</button>
                             <button onclick="openAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-indigo-700">+ Add Student</button>
                             <button onclick="loadData()" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700">Refresh</button>
@@ -148,7 +158,7 @@
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-gray-800 text-white">
-                                <th class="p-3">Sl No</th> <!-- Serial Number Added -->
+                                <th class="p-3">Sl No</th>
                                 <th class="p-3">Reg No</th>
                                 <th class="p-3">Name</th>
                                 <th class="p-3">Class</th>
@@ -227,7 +237,7 @@
     <!-- ================= PRINT SECTIONS ================= -->
 
     <!-- 1. ADMIT CARD PRINT FORMAT -->
-    <div id="printSectionAdmit" class="hidden print-active flex-col bg-white">
+    <div id="printSectionAdmit" class="hidden flex-col bg-white">
         <div class="text-center mb-2">
             <img src="logo.png" class="h-14 w-14 mx-auto object-contain mb-1" onerror="this.src='https://via.placeholder.com/60'">
             <h1 class="text-2xl font-extrabold text-blue-900 tracking-wide leading-tight"><span class="dyn-examName">MAHARISHI TALENT SEARCH EXAMINATION</span> <span class="dyn-year"></span></h1>
@@ -273,17 +283,17 @@
                 <div class="text-center w-40 border-t-2 border-black pt-1">SIGNATURE OF INVIGILATOR</div>
                 
                 <!-- Signature Box Container -->
-                <div class="text-center w-48 flex flex-col justify-end items-center h-full">
-                    <div class="h-[85px] mb-1 flex items-end justify-center w-full">
+                <div class="text-center w-48 flex flex-col justify-end items-center h-full relative">
+                    <div class="h-[85px] flex items-end justify-center w-full absolute bottom-5">
                         <!-- Default Sign -->
                         <img id="defaultSignImg" src="sign.png" class="max-h-[60px] object-contain mb-1" onerror="this.style.display='none'">
                         
-                        <!-- Auto eSign Box (Hidden by Default) -->
+                        <!-- Auto eSign Box (Unboxed & Transparent) -->
                         <div id="digitalSignatureBox" class="esign-box">
-                            <!-- 3D Checkmark SVG -->
+                            <!-- Crisp 3D Checkmark SVG -->
                             <svg class="esign-bg-svg" viewBox="0 0 100 100">
-                                <polyline points="20,50 45,75 85,20" fill="none" stroke="black" stroke-width="12" transform="translate(2,2)" />
-                                <polyline points="20,50 45,75 85,20" fill="none" stroke="#00a640" stroke-width="10" />
+                                <polyline points="20,50 45,75 85,20" fill="none" stroke="black" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" transform="translate(2,2)" />
+                                <polyline points="20,50 45,75 85,20" fill="none" stroke="#00a640" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <div class="esign-content">
                                 <p class="esign-title">Digitally Signed</p>
@@ -309,7 +319,7 @@
     </div>
 
     <!-- 2. ACKNOWLEDGEMENT SLIP PRINT FORMAT -->
-    <div id="printSectionSlip" class="hidden print-active-slip flex-col justify-between bg-white px-4">
+    <div id="printSectionSlip" class="hidden flex-col justify-between bg-white px-4">
         <!-- Student Copy -->
         <div class="border-4 border-blue-900 rounded-lg p-5 relative bg-blue-50 h-[48%] flex flex-col">
             <div class="text-center mb-2">
@@ -486,22 +496,30 @@
             } catch(e) { document.getElementById('dataTableBody').innerHTML = '<tr><td colspan="7" class="text-center p-4 text-red-500">Error loading data</td></tr>'; }
         }
 
-        // NEW: Render Dashboard Stats
         function renderDashboardStats() {
             let total = studentsData.length;
             let released = studentsData.filter(s => s.admitStatus === 'Released').length;
             let hold = studentsData.filter(s => s.admitStatus === 'Hold').length;
 
-            let nameCounts = {};
-            studentsData.forEach(s => { let n = s.studentName.toUpperCase(); nameCounts[n] = (nameCounts[n] || 0) + 1; });
-            let dupCount = studentsData.filter(s => nameCounts[s.studentName.toUpperCase()] > 1).length;
+            // Updated Duplicate Logic
+            let nameCounts = {}; let phoneCounts = {};
+            studentsData.forEach(s => { 
+                let n = s.studentName.trim().replace(/\s+/g, ' ').toUpperCase(); 
+                let p = s.phone.trim();
+                nameCounts[n] = (nameCounts[n] || 0) + 1; 
+                phoneCounts[p] = (phoneCounts[p] || 0) + 1;
+            });
+            let dupCount = studentsData.filter(s => {
+                let n = s.studentName.trim().replace(/\s+/g, ' ').toUpperCase();
+                let p = s.phone.trim();
+                return nameCounts[n] > 1 || phoneCounts[p] > 1;
+            }).length;
 
             document.getElementById('statTotal').innerText = total;
             document.getElementById('statReleased').innerText = released;
             document.getElementById('statHold').innerText = hold;
             document.getElementById('statDups').innerText = dupCount;
 
-            // Class Stats
             let classHTML = '';
             ['I','II','III','IV','V','VI','VII','VIII','IX','X'].forEach(c => {
                 let st = studentsData.filter(s => s.class === c);
@@ -513,7 +531,6 @@
             });
             document.getElementById('classStatsBody').innerHTML = classHTML || '<tr><td colspan="4" class="p-2">No Data</td></tr>';
 
-            // Section Stats
             let secHTML = '';
             ['MAHA','RISHI','N/A'].forEach(sec => {
                 let st = studentsData.filter(s => s.section === sec);
@@ -525,7 +542,6 @@
             });
             document.getElementById('secStatsBody').innerHTML = secHTML || '<tr><td colspan="4" class="p-2">No Data</td></tr>';
 
-            // Level Stats
             let lvlHTML = '';
             ['LEVEL I','LEVEL II','LEVEL III','LEVEL IV','LEVEL V'].forEach(lvl => {
                 let st = studentsData.filter(s => s.level.startsWith(lvl));
@@ -567,7 +583,7 @@
                 let statusColor = s.admitStatus === 'Released' ? 'bg-green-100 text-green-900 border-green-400' : 'bg-orange-100 text-orange-900 border-orange-400';
                 tbody.insertAdjacentHTML('beforeend', `
                 <tr class="border-b border-gray-200 hover:bg-blue-50 transition">
-                    <td class="p-3 font-bold text-gray-700">${index + 1}</td> <!-- Serial No -->
+                    <td class="p-3 font-bold text-gray-700">${index + 1}</td> 
                     <td class="p-3 font-extrabold text-blue-900">${s.regNo}</td>
                     <td class="p-3 font-bold text-gray-800 uppercase">${s.studentName}</td>
                     <td class="p-3 font-bold text-gray-600">Class ${s.class}</td>
@@ -604,7 +620,6 @@
             renderTable(filtered);
         }
 
-        // NEW: Toggle Duplicates Logic
         function toggleDuplicates() {
             isShowingDuplicates = !isShowingDuplicates;
             let btn = document.getElementById('dupBtn');
@@ -614,9 +629,18 @@
                 btn.classList.replace('hover:bg-purple-700', 'hover:bg-red-700');
                 btn.innerText = "Hide Duplicates";
                 
-                let nameCounts = {};
-                studentsData.forEach(s => { let n = s.studentName.toUpperCase(); nameCounts[n] = (nameCounts[n] || 0) + 1; });
-                let dups = studentsData.filter(s => nameCounts[s.studentName.toUpperCase()] > 1);
+                let nameCounts = {}; let phoneCounts = {};
+                studentsData.forEach(s => { 
+                    let n = s.studentName.trim().replace(/\s+/g, ' ').toUpperCase(); 
+                    let p = s.phone.trim();
+                    nameCounts[n] = (nameCounts[n] || 0) + 1; 
+                    phoneCounts[p] = (phoneCounts[p] || 0) + 1;
+                });
+                let dups = studentsData.filter(s => {
+                    let n = s.studentName.trim().replace(/\s+/g, ' ').toUpperCase();
+                    let p = s.phone.trim();
+                    return nameCounts[n] > 1 || phoneCounts[p] > 1;
+                });
                 renderTable(dups);
             } else {
                 btn.classList.replace('bg-red-600', 'bg-purple-600');
@@ -762,7 +786,7 @@
             let s = studentsData.find(x => x.regNo == regNo);
             if(s.admitStatus !== 'Released') { if(!confirm(`Warning: Status is '${s.admitStatus}'. Print anyway?`)) return; }
             
-            // Sync Signature Logic
+            // Open Crisp Digital Signature
             let sigData = appSettings.digitalSignature;
             if(sigData && sigData.isAuthorized) {
                 document.getElementById('defaultSignImg').style.display = 'none';
