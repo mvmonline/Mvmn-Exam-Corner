@@ -127,7 +127,6 @@
             </div>
         </div>
 
-        <!-- Cut Line -->
         <div class="text-center my-3 font-black text-gray-400 tracking-widest text-xs flex items-center justify-center">
             <span>✂ - - - - - - - - - - - - - - - - - - - - - - - - CUT HERE - - - - - - - - - - - - - - - - - - - - - - - - ✂</span>
         </div>
@@ -234,23 +233,40 @@
             document.getElementById('level').value = level;
         }
 
+        function formatDate(date) {
+            let d = new Date(date);
+            let day = ("0" + d.getDate()).slice(-2);
+            let month = ("0" + (d.getMonth() + 1)).slice(-2);
+            let year = d.getFullYear();
+            let hours = d.getHours();
+            let minutes = ("0" + d.getMinutes()).slice(-2);
+            let ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            return `${day}/${month}/${year}, ${hours}:${minutes} ${ampm}`;
+        }
+
         async function handleFormSubmit(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.innerHTML = "Processing..."; btn.disabled = true;
 
-            // Remove extra spaces for strict duplicate check
             let sName = document.getElementById('studentName').value.trim().replace(/\s+/g, ' ').toUpperCase();
+            let fName = document.getElementById('fatherName').value.trim().replace(/\s+/g, ' ').toUpperCase();
+            let cls = document.getElementById('class').value;
             let dobVal = document.getElementById('dob').value;
             let phoneVal = document.getElementById('phone').value.trim();
 
             try {
-                // Strict Duplicate check by Name & DOB OR Phone Number
-                const existingByName = await db.collection("mtse_students").where("studentName", "==", sName).where("dob", "==", dobVal).get();
-                const existingByPhone = await db.collection("mtse_students").where("phone", "==", phoneVal).get();
+                // STRICT Duplicate Check: Name + Father Name + Class + DOB
+                const existing = await db.collection("mtse_students")
+                    .where("studentName", "==", sName)
+                    .where("fatherName", "==", fName)
+                    .where("class", "==", cls)
+                    .where("dob", "==", dobVal).get();
 
-                if (!existingByName.empty || !existingByPhone.empty) {
-                    let oldData = !existingByName.empty ? existingByName.docs[0].data() : existingByPhone.docs[0].data();
+                if (!existing.empty) {
+                    let oldData = existing.docs[0].data();
                     alert("You have already registered! Displaying your existing Acknowledgement Slip.");
                     generateSlip(oldData, oldData.regNo, oldData.timestamp);
                     return;
@@ -261,18 +277,15 @@
                 }
 
                 let regNo = Math.floor(100000 + Math.random() * 900000); 
-                let dateStr = new Date().toLocaleString();
+                let dateStr = formatDate(new Date());
 
                 const formData = {
-                    regNo: regNo, studentName: sName,
-                    fatherName: document.getElementById('fatherName').value.trim().replace(/\s+/g, ' ').toUpperCase(),
+                    regNo: regNo, studentName: sName, fatherName: fName,
                     gender: document.getElementById('gender').value,
-                    class: document.getElementById('class').value,
-                    section: document.getElementById('section').value,
+                    class: cls, section: document.getElementById('section').value,
                     dob: dobVal, level: document.getElementById('level').value,
-                    phone: phoneVal,
-                    admitStatus: "Hold", 
-                    timestamp: dateStr
+                    phone: phoneVal, admitStatus: "Hold", timestamp: dateStr,
+                    sortDate: new Date().toISOString() // Added for perfect sorting
                 };
 
                 await db.collection("mtse_students").doc(regNo.toString()).set(formData);
@@ -286,7 +299,8 @@
             document.getElementById('slipSection').classList.remove('hidden');
             document.getElementById('slipSection').classList.add('flex');
             
-            let downDate = new Date().toLocaleString();
+            let downDate = formatDate(new Date());
+            
             document.getElementById('slipRegNo').innerText = regNo;
             document.getElementById('slipSubDate').innerText = subDate; document.getElementById('slipDownDate').innerText = downDate;
             document.getElementById('slipName').innerText = data.studentName; document.getElementById('slipFName').innerText = data.fatherName;
