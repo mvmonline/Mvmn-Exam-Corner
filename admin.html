@@ -36,20 +36,18 @@
         input, select { text-transform: uppercase; }
         .slip-table td { padding: 4px 8px; border-bottom: 1px dashed #ccc; }
         
-        /* 100% Crisp 3D Digital Signature Fixed */
-        .esign-box { position: relative; width: 180px; height: 70px; background: transparent; border: none; padding: 0; text-align: left; overflow: visible; display: none; flex-direction: column; justify-content: center; box-shadow: none; }
-        .esign-box.active { display: flex !important; }
-        .esign-svg { position: absolute; right: 10px; top: -10px; width: 60px; height: 60px; z-index: -1; opacity: 1; }
-        .esign-content { position: relative; z-index: 10; text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white; }
-        .esign-title { color: #008000; font-weight: 900; font-size: 14px; line-height: 1; margin-bottom: 4px; }
-        .esign-text { color: #000; font-size: 11px; font-weight: 900; line-height: 1.3; }
-        .esign-text.light { color: #222; font-size: 10px; font-weight: 700; }
+        /* 100% Crisp Print-Forced Digital Signature */
+        .esign-container { position: relative; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; }
+        .esign-content { text-align: left; padding-right: 50px; }
+        .esign-title { color: #008000; font-weight: 900; font-size: 14px; margin-bottom: 2px; }
+        .esign-text { color: #000; font-size: 11px; font-weight: bold; line-height: 1.3; }
+        /* Base64 Tick Image to force browser to print it */
+        .esign-tick { position: absolute; right: 20px; top: -5px; width: 60px; height: 60px; z-index: -1; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
     
     <div id="ui-layer">
-        <!-- Beautified Login -->
         <div id="loginSection" class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-blue-900 via-gray-900 to-black">
             <div class="bg-white p-10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md text-center border-t-8 border-blue-600 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-32 bg-blue-50 -z-10 rounded-b-full"></div>
@@ -63,7 +61,6 @@
             </div>
         </div>
 
-        <!-- Dashboard -->
         <div id="dashboardSection" class="hidden p-2 md:p-4 max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-md border border-gray-200">
                 <div class="flex items-center gap-3">
@@ -79,7 +76,6 @@
                 </div>
             </div>
 
-            <!-- Tab 0: Dashboard Overview -->
             <div id="tab-dashboard" class="hidden">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white border-l-4 border-blue-600 p-4 rounded-lg shadow-sm relative">
@@ -126,7 +122,6 @@
                 </div>
             </div>
 
-            <!-- Tab 1: Students -->
             <div id="tab-students" class="hidden">
                 <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
                     <div class="flex flex-wrap gap-3 items-center justify-between mb-3">
@@ -143,7 +138,6 @@
                         <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
                             <button id="dupBtn" onclick="toggleDuplicates()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 transition">Show Duplicates</button>
                             <button onclick="openAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-indigo-700">+ Add</button>
-                            <!-- REFRESH BUTTON FIXED -->
                             <button onclick="loadData()" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700">Refresh</button>
                             <button onclick="downloadCSV()" class="bg-yellow-500 text-black px-4 py-2 rounded font-bold shadow hover:bg-yellow-600">Export</button>
                         </div>
@@ -168,7 +162,6 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Settings -->
             <div id="tab-settings" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
                 <h2 class="text-xl font-bold mb-4 text-blue-900 border-b pb-2">Exam Information & Admit Release</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-indigo-50 p-4 rounded border border-indigo-100">
@@ -282,19 +275,16 @@
                     <div class="h-[70px] mb-1 flex items-end justify-center w-full absolute bottom-5">
                         <img id="defaultSignImg" src="sign.png" class="max-h-[50px] object-contain mb-1" onerror="this.style.display='none'">
                         
-                        <!-- eSign Box Fixed -->
-                        <div id="digitalSignatureBox" class="esign-box absolute bottom-0 left-0 right-0 mx-auto">
+                        <!-- Open Digital Signature Box with Base64 Image to FORCE PRINT -->
+                        <div id="digitalSignatureBox" class="hidden esign-container">
                             <div class="esign-content">
                                 <p class="esign-title">Digitally Signed</p>
                                 <p class="esign-text">By: <span id="sigNameOut"></span></p>
                                 <p class="esign-text light mt-1">Date: <span id="sigDateOut"></span></p>
                                 <p class="esign-text light">Loc: <span id="sigLocOut"></span></p>
                             </div>
-                            <!-- Crisp 3D Checkmark SVG -->
-                            <svg class="esign-svg" viewBox="0 0 100 100">
-                                <polyline points="20,55 40,75 80,15" fill="none" stroke="#222" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter" transform="translate(3,3)" />
-                                <polyline points="20,55 40,75 80,15" fill="none" stroke="#008000" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter" />
-                            </svg>
+                            <!-- Base64 Crisp Green Tick -->
+                            <img class="esign-tick" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cG9seWxpbmUgcG9pbnRzPSIyMCw1NSA0MCw3NSA4MCwxNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjEyIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzLDMpIiAvPjxwb2x5bGluZSBwb2ludHM9IjIwLDU1IDQwLDc1IDgwLDE1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDgwMDAiIHN0cm9rZS13aWR0aD0iMTIiIHN0cm9rZS1saW5lY2FwPSJzcXVhcmUiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIC8+PC9zdmc+">
                         </div>
                     </div>
                     <p class="border-t-2 border-black w-full pt-1">PRINCIPAL SIGNATURE</p>
@@ -383,7 +373,7 @@
             <div class="mt-auto flex justify-between items-end pt-4">
                 <div></div>
                 <div class="text-center w-48">
-                    <div class="h-10 w-full"></div> 
+                    <div class="h-10 w-full"></div> <!-- Empty space for sign -->
                     <p class="border-t-2 border-black pt-1 font-extrabold text-xs">Signature</p>
                     <p class="font-extrabold text-xs text-gray-600">Office of the Principal</p>
                 </div>
@@ -484,6 +474,7 @@
             if(tab === 'dashboard') renderDashboardStats();
         }
 
+        // ERROR FIX: Error handling during Date parse for older DB entries
         async function loadData() {
             document.getElementById('dataTableBody').innerHTML = '<tr><td colspan="7" class="text-center p-4 font-bold text-blue-900">Loading Data...</td></tr>';
             isShowingDuplicates = false;
@@ -496,16 +487,25 @@
                 studentsData = [];
                 snapshot.forEach(d => { studentsData.push(d.data()); });
                 
-                // Sort Safe Fix (Newest at top)
+                // Safe Date Sorting (Will put newest on top, even if some have empty dates)
                 studentsData.sort((a, b) => {
-                    let dateA = a.sortDate ? new Date(a.sortDate).getTime() : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
-                    let dateB = b.sortDate ? new Date(b.sortDate).getTime() : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+                    let dateA = a.sortDate ? new Date(a.sortDate).getTime() : 0;
+                    let dateB = b.sortDate ? new Date(b.sortDate).getTime() : 0;
+                    if(dateA === 0 && a.timestamp) { // Fallback for old data
+                        try { let p = a.timestamp.split(',')[0].split('/'); dateA = new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); } catch(e){}
+                    }
+                    if(dateB === 0 && b.timestamp) {
+                        try { let p = b.timestamp.split(',')[0].split('/'); dateB = new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); } catch(e){}
+                    }
                     return dateB - dateA; 
                 });
                 
                 renderDashboardStats();
                 filterTable(); 
-            } catch(e) { document.getElementById('dataTableBody').innerHTML = '<tr><td colspan="7" class="text-center p-4 text-red-500">Error loading data. Check internet connection.</td></tr>'; }
+            } catch(e) { 
+                console.log(e); 
+                document.getElementById('dataTableBody').innerHTML = '<tr><td colspan="7" class="text-center p-4 text-red-500">Error loading data. Check console.</td></tr>'; 
+            }
         }
 
         function renderDashboardStats() {
@@ -513,7 +513,6 @@
             let released = studentsData.filter(s => s.admitStatus === 'Released').length;
             let hold = studentsData.filter(s => s.admitStatus === 'Hold').length;
 
-            // Strict Duplicate Logic (Name + FName + Class + DOB) - ignoring phone
             let uniqueKeys = {}; 
             studentsData.forEach(s => { 
                 let key = `${s.studentName || ""}_${s.fatherName || ""}_${s.class || ""}_${s.dob || ""}`.toUpperCase().replace(/\s+/g, '');
@@ -619,7 +618,7 @@
             let c = document.getElementById('filterClass').value;
             let s = document.getElementById('filterSec').value;
             let l = document.getElementById('filterLevel').value;
-            let dateFilter = document.getElementById('filterDate').value; // YYYY-MM-DD
+            let dateFilter = document.getElementById('filterDate').value;
 
             let filtered = studentsData.filter(st => {
                 let matchQ = (st.studentName || "").toLowerCase().includes(q) || (st.regNo || "").toString().includes(q) || (st.phone || "").includes(q);
@@ -627,17 +626,16 @@
                 let matchS = s === "" || st.section === s;
                 let matchL = l === "" || (st.level || "").startsWith(l + " ");
                 
-                // Safe Date Logic
                 let matchD = true;
                 if(dateFilter) {
                     if(st.sortDate) {
                         matchD = st.sortDate.startsWith(dateFilter);
                     } else if (st.timestamp) {
-                        let parts = st.timestamp.split(',')[0].split('/'); // DD/MM/YYYY
-                        if(parts.length === 3) {
+                        try {
+                            let parts = st.timestamp.split(',')[0].split('/'); 
                             let formattedStoreDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
                             matchD = formattedStoreDate === dateFilter;
-                        } else { matchD = false; }
+                        } catch(e) { matchD = false; }
                     } else { matchD = false; }
                 }
 
@@ -829,7 +827,7 @@
             let s = studentsData.find(x => x.regNo == regNo);
             if(s.admitStatus !== 'Released') { if(!confirm(`Warning: Status is '${s.admitStatus}'. Print anyway?`)) return; }
             
-            // Open Crisp Digital Signature 3D Tick
+            // Base64 Crisp Digital Signature Check
             let sigData = appSettings.digitalSignature;
             if(sigData && sigData.isAuthorized) {
                 document.getElementById('defaultSignImg').style.display = 'none';
