@@ -105,28 +105,27 @@
                 <div class="text-center w-40 border-t-2 border-black pt-1">SIGNATURE OF INVIGILATOR</div>
                 
                 <div class="text-center w-48 flex flex-col justify-end items-center h-full relative">
-                    <div class="h-[75px] mb-1 flex items-end justify-center w-full absolute bottom-5">
-                        <img id="defaultSignImg" src="sign.png" style="max-height:60px; object-fit:contain; margin-bottom:4px;" onerror="this.style.display='none'">
+                    <div class="h-[75px] w-full flex items-end justify-center mb-1">
+                        <img id="defaultSignImg" src="sign.png" style="max-height:60px; object-fit:contain;" onerror="this.style.display='none'">
                         
-                        <!-- Crisp 3D Green Tick Box (Inline to force print) -->
-                        <div id="digitalSignatureBox" style="display:none; width:100%; justify-content:flex-end; align-items:center; text-align:left; padding-right:15px; position:relative;">
-                            <div style="z-index:10; text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;">
+                        <!-- Inline eSign Box for Absolute Print Certainty -->
+                        <div id="digitalSignatureBox" style="display:none; width:100%; justify-content:flex-end; align-items:center; text-align:left; padding-right:10px; position:relative;">
+                            <div style="z-index:10; padding-right: 15px;">
                                 <div style="color:#008000; font-weight:900; font-size:14px; margin-bottom:2px;">Digitally Signed</div>
                                 <div style="color:#000; font-size:11px; font-weight:900;">By: <span id="sigNameOut"></span></div>
-                                <div style="color:#222; font-size:10px; font-weight:bold; margin-top:2px;">Date: <span id="sigDateOut"></span></div>
-                                <div style="color:#222; font-size:10px; font-weight:bold;">Loc: <span id="sigLocOut"></span></div>
+                                <div style="color:#444; font-size:10px; font-weight:bold; margin-top:2px;">Date: <span id="sigDateOut"></span></div>
+                                <div style="color:#444; font-size:10px; font-weight:bold;">Loc: <span id="sigLocOut"></span></div>
                             </div>
-                            <!-- Perfect 3D SVG Tick -->
-                            <svg width="60" height="60" viewBox="0 0 100 100" style="position:absolute; right:0px; top:-5px; z-index:-1;">
-                                <polyline points="25,55 45,75 85,25" fill="none" stroke="#222" stroke-width="12" transform="translate(3, 3)"/>
-                                <polyline points="25,55 45,75 85,25" fill="none" stroke="#008000" stroke-width="12" />
+                            <!-- Inline SVG for Exact 3D Green Tick -->
+                            <svg width="55" height="55" viewBox="0 0 100 100" style="position:absolute; right:0px; top:5px; z-index:1;">
+                                <polyline points="25,55 45,75 85,25" fill="none" stroke="#222" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter" transform="translate(3,3)"/>
+                                <polyline points="25,55 45,75 85,25" fill="none" stroke="#008000" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter"/>
                             </svg>
                         </div>
                     </div>
-                    <p class="border-t-2 border-black w-full pt-1">PRINCIPAL SIGNATURE</p>
+                    <p class="border-t-2 border-black w-full pt-1 text-xs font-bold">PRINCIPAL SIGNATURE</p>
                 </div>
             </div>
-            
             <div class="text-[11px] font-bold bg-gray-50 border border-gray-300 p-2 rounded">
                 <h4 class="font-extrabold mb-0.5 text-red-700 underline">IMPORTANT INSTRUCTIONS:</h4>
                 <ul class="list-disc pl-5 space-y-0 text-gray-800">
@@ -198,7 +197,7 @@
 
                 if(s.admitStatus === "Released") {
                     
-                    // Auto Sync Digital Signature
+                    // Display Signature Using Explicit Style
                     let sigData = appSettings.digitalSignature;
                     if(sigData && sigData.isAuthorized) {
                         document.getElementById('defaultSignImg').style.display = 'none';
