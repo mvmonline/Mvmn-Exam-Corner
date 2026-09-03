@@ -117,9 +117,8 @@
             <div id="tab-students" class="hidden">
                 <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
                     <div class="flex flex-wrap gap-3 items-center justify-between mb-3">
-                        <div class="flex-1 flex flex-wrap gap-2">
+                        <div class="flex-1 flex flex-wrap gap-2 items-center">
                             <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Reg No / Name..." class="border-2 border-gray-300 p-2 w-full md:w-48 rounded font-bold outline-none focus:border-blue-500">
-                            <input type="date" id="filterDate" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-gray-700 outline-none focus:border-blue-500">
                             <select id="filterClass" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-blue-900 outline-none">
                                 <option value="">All Classes</option><option value="I">Class I</option><option value="II">Class II</option><option value="III">Class III</option><option value="IV">Class IV</option><option value="V">Class V</option><option value="VI">Class VI</option><option value="VII">Class VII</option><option value="VIII">Class VIII</option><option value="IX">Class IX</option><option value="X">Class X</option>
                             </select>
@@ -129,6 +128,8 @@
                             <select id="filterLevel" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-blue-900 outline-none">
                                 <option value="">All Levels</option><option value="LEVEL I">Level I</option><option value="LEVEL II">Level II</option><option value="LEVEL III">Level III</option><option value="LEVEL IV">Level IV</option><option value="LEVEL V">Level V</option>
                             </select>
+                            <!-- Clear Button Added Here -->
+                            <button onclick="clearFilters()" class="bg-gray-500 text-white px-4 py-2 rounded font-bold shadow hover:bg-gray-600 transition">Clear</button>
                         </div>
                         <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
                             <button id="dupBtn" onclick="toggleDuplicates()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 transition">Show Duplicates</button>
@@ -268,16 +269,17 @@
                     <div class="h-[75px] w-full flex items-end justify-center mb-1">
                         <img id="defaultSignImg" src="sign.png" style="max-height:60px; object-fit:contain;" onerror="this.style.display='none'">
                         
-                        <!-- 100% PERFECT 3D SIGNATURE (Fixed spacing & Sharp tick) -->
+                        <!-- Open Digital Signature Box with Exact Thick SVG -->
                         <div id="digitalSignatureBox" style="display:none; width:100%; justify-content:flex-end; align-items:center; text-align:left; padding-right:5px; position:relative;">
-                            <div style="z-index:10; padding-right: 55px; text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff;">
+                            <div style="z-index:10; padding-right: 55px; text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff;">
                                 <div style="color:#008000; font-weight:900; font-size:14px; margin-bottom:2px;">Digitally Signed</div>
                                 <div style="color:#000; font-size:11px; font-weight:900;">By: <span id="sigNameOut"></span></div>
                                 <div style="color:#444; font-size:10px; font-weight:bold; margin-top:2px;">Date: <span id="sigDateOut"></span></div>
+                                <!-- Updated Loc to Location -->
                                 <div style="color:#444; font-size:10px; font-weight:bold;">Location: <span id="sigLocOut"></span></div>
                             </div>
-                            <!-- Base64 Sharp 3D Green Tick -->
-                            <img class="esign-tick" style="position:absolute; right:-10px; top:-5px; width:65px; height:65px; z-index:0;" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cG9seWxpbmUgcG9pbnRzPSIyMCw1NSA0MCw3OCA5NSwxNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjEyIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzLDMpIi8+PHBvbHlsaW5lIHBvaW50cz0iMjAsNTUgNDAsNzggOTUsMTUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwODAwMCIgc3Ryb2tlLXdpZHRoPSIxMiIgc3Ryb2tlLWxpbmVjYXA9InNxdWFyZSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvc3ZnPg==">
+                            <!-- Updated Tick: Thick, offset to the right, #008000 color matching reference image -->
+                            <img class="esign-tick" style="position:absolute; right:-10px; top:-5px; width:65px; height:65px; z-index:0;" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4gPHBhdGggZD0iTTE1IDUwIEw0MCA4NSBMOTUgMTUgTDgyIDEwIEw0MCA2MCBMMjUgNDIgWiIgZmlsbD0iIzIyMiIgb3BhY2l0eT0iMC42IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzLDMpIi8+IDxwYXRoIGQ9Ik0xNSA1MCBMNDAgODUgTDk1IDE1IEw4MiAxMCBMNDAgNjAgTDI1IDQyIFoiIGZpbGw9IiMwMDgwMDAiLz4gPC9zdmc+">
                         </div>
                     </div>
                     <p class="border-t-2 border-black w-full pt-1 text-xs font-bold">PRINCIPAL SIGNATURE</p>
@@ -410,6 +412,9 @@
 
         function checkDigitalSignature(sigData) {
             if(sigData && sigData.isAuthorized) {
+                window.isSignatureAuthorized = true;
+                window.sigDateTime = sigData.timestamp;
+                window.sigLocation = sigData.location;
                 document.getElementById('authSignBtn').innerText = "eSign Authorized ✓";
                 document.getElementById('authSignBtn').classList.remove('bg-teal-600', 'hover:bg-teal-700');
                 document.getElementById('authSignBtn').classList.add('bg-green-800', 'hover:bg-green-900');
@@ -597,32 +602,27 @@
             });
         }
 
-        // FILTER LOGIC
+        // Clear Filter Function
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterSec').value = '';
+            document.getElementById('filterLevel').value = '';
+            filterTable();
+        }
+
         function filterTable() {
             let q = document.getElementById('searchInput').value.toLowerCase();
             let c = document.getElementById('filterClass').value;
             let s = document.getElementById('filterSec').value;
             let l = document.getElementById('filterLevel').value;
-            let dateFilter = document.getElementById('filterDate').value; 
 
             let filtered = studentsData.filter(st => {
                 let matchQ = (st.studentName || "").toLowerCase().includes(q) || (st.regNo || "").toString().includes(q) || (st.phone || "").includes(q);
                 let matchC = c === "" || st.class === c;
                 let matchS = s === "" || st.section === s;
                 let matchL = l === "" || (st.level || "").startsWith(l + " ");
-                
-                let matchD = true;
-                if(dateFilter) {
-                    if (st.timestamp) {
-                        try {
-                            let parts = st.timestamp.split(',')[0].trim().split('/'); 
-                            let formattedStoreDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                            matchD = (formattedStoreDate === dateFilter);
-                        } catch(e) { matchD = false; }
-                    } else { matchD = false; }
-                }
-
-                return matchQ && matchC && matchS && matchL && matchD;
+                return matchQ && matchC && matchS && matchL;
             });
             renderTable(filtered);
         }
@@ -800,19 +800,17 @@
             if(targetId === 'printSectionAdmit') targetDiv.classList.add('print-active');
             else targetDiv.classList.add('print-active-slip');
             
-            // Timeout to give browser time to load Base64 Tick
             setTimeout(() => {
                 window.print();
                 targetDiv.classList.remove('print-active', 'print-active-slip');
                 document.getElementById('ui-layer').classList.remove('hidden');
-            }, 600);
+            }, 300);
         }
 
         function printAdmit(regNo) {
             let s = studentsData.find(x => x.regNo == regNo);
             if(s.admitStatus !== 'Released') { if(!confirm(`Warning: Status is '${s.admitStatus}'. Print anyway?`)) return; }
             
-            // CRISP DIGITAL SIGNATURE
             let sigData = appSettings.digitalSignature;
             if(sigData && sigData.isAuthorized) {
                 document.getElementById('defaultSignImg').style.display = 'none';
