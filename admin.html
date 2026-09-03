@@ -16,7 +16,6 @@
             
             body > div:not(.print-active):not(.print-active-slip) { display: none !important; }
             
-            /* Admin Admit Print CSS */
             .print-active { 
                 display: flex !important; flex-direction: column !important;
                 width: 200mm !important; height: 285mm !important; 
@@ -25,7 +24,6 @@
                 box-sizing: border-box !important; box-shadow: none !important; 
                 overflow: hidden !important; page-break-inside: avoid !important;
             }
-            /* Admin Slip Print CSS */
             .print-active-slip { 
                 display: flex !important; flex-direction: column !important; 
                 width: 100% !important; height: 280mm !important; 
@@ -37,12 +35,18 @@
         }
         input, select { text-transform: uppercase; }
         .slip-table td { padding: 4px 8px; border-bottom: 1px dashed #ccc; }
+        
+        /* 100% Crisp Print-Forced Digital Signature (Tick Visibility Fixed) */
+        .esign-container { position: relative; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; }
+        .esign-content { position: relative; z-index: 10; text-align: left; padding-right: 45px; text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white; }
+        .esign-title { color: #008000; font-weight: 900; font-size: 14px; margin-bottom: 2px; }
+        .esign-text { color: #000; font-size: 11px; font-weight: bold; line-height: 1.3; }
+        .esign-tick { position: absolute; right: 25px; top: -2px; width: 60px; height: 60px; z-index: 1; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
     
     <div id="ui-layer">
-        <!-- Beautified Login -->
         <div id="loginSection" class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-blue-900 via-gray-900 to-black">
             <div class="bg-white p-10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md text-center border-t-8 border-blue-600 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-32 bg-blue-50 -z-10 rounded-b-full"></div>
@@ -56,7 +60,6 @@
             </div>
         </div>
 
-        <!-- Dashboard -->
         <div id="dashboardSection" class="hidden p-2 md:p-4 max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-md border border-gray-200">
                 <div class="flex items-center gap-3">
@@ -72,7 +75,6 @@
                 </div>
             </div>
 
-            <!-- Tab 0: Dashboard Overview -->
             <div id="tab-dashboard" class="hidden">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white border-l-4 border-blue-600 p-4 rounded-lg shadow-sm relative">
@@ -119,13 +121,11 @@
                 </div>
             </div>
 
-            <!-- Tab 1: Students -->
             <div id="tab-students" class="hidden">
                 <div class="bg-white p-4 rounded-lg shadow-md mb-4 border border-gray-200">
                     <div class="flex flex-wrap gap-3 items-center justify-between mb-3">
                         <div class="flex-1 flex flex-wrap gap-2">
                             <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Reg No / Name..." class="border-2 border-gray-300 p-2 w-full md:w-48 rounded font-bold outline-none focus:border-blue-500">
-                            <!-- Removed Date Filter as Requested -->
                             <select id="filterClass" onchange="filterTable()" class="border-2 border-gray-300 p-2 rounded font-bold text-blue-900 outline-none">
                                 <option value="">All Classes</option><option value="I">Class I</option><option value="II">Class II</option><option value="III">Class III</option><option value="IV">Class IV</option><option value="V">Class V</option><option value="VI">Class VI</option><option value="VII">Class VII</option><option value="VIII">Class VIII</option><option value="IX">Class IX</option><option value="X">Class X</option>
                             </select>
@@ -163,7 +163,6 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Settings -->
             <div id="tab-settings" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
                 <h2 class="text-xl font-bold mb-4 text-blue-900 border-b pb-2">Exam Information & Admit Release</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-indigo-50 p-4 rounded border border-indigo-100">
@@ -225,8 +224,6 @@
         </div>
     </div>
 
-    <!-- ================= PRINT SECTIONS ================= -->
-
     <!-- 1. ADMIT CARD PRINT FORMAT -->
     <div id="printSectionAdmit" class="hidden flex-col bg-white">
         <div class="text-center mb-2">
@@ -275,22 +272,18 @@
                 
                 <div class="text-center w-48 flex flex-col justify-end items-center h-full relative">
                     <div class="h-[75px] w-full flex items-end justify-center mb-1">
-                        <!-- Default Sign -->
                         <img id="defaultSignImg" src="sign.png" style="max-height:60px; object-fit:contain;" onerror="this.style.display='none'">
                         
-                        <!-- Inline eSign Box for Absolute Print Certainty -->
-                        <div id="digitalSignatureBox" style="display:none; width:100%; justify-content:flex-end; align-items:center; text-align:left; padding-right:10px; position:relative;">
-                            <div style="z-index:10; padding-right: 15px; text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff;">
-                                <div style="color:#008000; font-weight:900; font-size:14px; margin-bottom:2px;">Digitally Signed</div>
-                                <div style="color:#000; font-size:11px; font-weight:900;">By: <span id="sigNameOut"></span></div>
-                                <div style="color:#444; font-size:10px; font-weight:bold; margin-top:2px;">Date: <span id="sigDateOut"></span></div>
-                                <div style="color:#444; font-size:10px; font-weight:bold;">Loc: <span id="sigLocOut"></span></div>
+                        <!-- Fixed Digital Signature (Z-index updated so tick is not hidden) -->
+                        <div id="digitalSignatureBox" style="display:none;" class="esign-container">
+                            <div class="esign-content">
+                                <p class="esign-title">Digitally Signed</p>
+                                <p class="esign-text">By: <span id="sigNameOut"></span></p>
+                                <p class="esign-text light mt-1">Date: <span id="sigDateOut"></span></p>
+                                <p class="esign-text light">Loc: <span id="sigLocOut"></span></p>
                             </div>
-                            <!-- Inline SVG for Exact 3D Green Tick -->
-                            <svg width="55" height="55" viewBox="0 0 100 100" style="position:absolute; right:0px; top:5px; z-index:-1;">
-                                <polyline points="25,55 45,75 85,25" fill="none" stroke="#222" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter" transform="translate(3,3)"/>
-                                <polyline points="25,55 45,75 85,25" fill="none" stroke="#008000" stroke-width="12" stroke-linecap="square" stroke-linejoin="miter"/>
-                            </svg>
+                            <!-- Embed Base64 Green Tick to force print (z-index 1 to stay on top) -->
+                            <img class="esign-tick" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cG9seWxpbmUgcG9pbnRzPSIyNSw1NSA0NSw3NSA4NSwyNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjEyIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzLDMpIi8+PHBvbHlsaW5lIHBvaW50cz0iMjUsNTUgNDUsNzUgODUsMjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwODAwMCIgc3Ryb2tlLXdpZHRoPSIxMiIgc3Ryb2tlLWxpbmVjYXA9InNxdWFyZSIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvc3ZnPg==">
                         </div>
                     </div>
                     <p class="border-t-2 border-black w-full pt-1 text-xs font-bold">PRINCIPAL SIGNATURE</p>
@@ -405,6 +398,7 @@
                     updateUIVariables(); 
                     checkDigitalSignature(appSettings.digitalSignature);
                 }
+
                 document.getElementById('loginSection').classList.remove('hidden');
             } catch(e) { console.log(e); alert("Failed to connect!"); }
         };
@@ -745,7 +739,7 @@
                     }
                     let regNo = Math.floor(100000 + Math.random() * 900000); 
                     data.regNo = regNo; data.admitStatus = "Hold"; 
-                    data.timestamp = new Date().toLocaleString('en-IN');
+                    data.timestamp = formatDate(new Date());
                     data.created_at = Date.now();
                     await db.collection("mtse_students").doc(regNo.toString()).set(data);
                     alert(`Student Added successfully! Reg No: ${regNo}`);
@@ -804,19 +798,19 @@
             if(targetId === 'printSectionAdmit') targetDiv.classList.add('print-active');
             else targetDiv.classList.add('print-active-slip');
             
-            // TIMEOUT FIXED: Allows Browser to render Green Tick before Print dialog
+            // Timeout allows the browser to render the Base64 green tick image properly
             setTimeout(() => {
                 window.print();
                 targetDiv.classList.remove('print-active', 'print-active-slip');
                 document.getElementById('ui-layer').classList.remove('hidden');
-            }, 300);
+            }, 500);
         }
 
         function printAdmit(regNo) {
             let s = studentsData.find(x => x.regNo == regNo);
             if(s.admitStatus !== 'Released') { if(!confirm(`Warning: Status is '${s.admitStatus}'. Print anyway?`)) return; }
             
-            // Open Crisp Digital Signature Print Fixed
+            // Explicit Display Logic for Force Print Signature
             let sigData = appSettings.digitalSignature;
             if(sigData && sigData.isAuthorized) {
                 document.getElementById('defaultSignImg').style.display = 'none';
@@ -836,7 +830,7 @@
 
         function printSlip(regNo) {
             let s = studentsData.find(x => x.regNo == regNo);
-            let downDate = new Date().toLocaleString('en-IN');
+            let downDate = formatDate(new Date());
             document.getElementById('slipRegNo').innerText = s.regNo; document.getElementById('slipSubDate').innerText = s.timestamp || 'N/A'; document.getElementById('slipDownDate').innerText = downDate;
             document.getElementById('slipName').innerText = s.studentName; document.getElementById('slipClass').innerText = s.class; document.getElementById('slipSec').innerText = s.section; document.getElementById('slipLevel').innerText = s.level; document.getElementById('slipFName').innerText = s.fatherName; document.getElementById('slipGender').innerText = s.gender; document.getElementById('slipDob').innerText = s.dob; document.getElementById('slipPhone').innerText = s.phone;
             
